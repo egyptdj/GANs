@@ -1,4 +1,5 @@
 from os import path
+from utils import image
 from warnings import warn
 import numpy as np
 import tensorflow as tf
@@ -52,19 +53,8 @@ class SessionDCGAN:
 
 
     def test_graph(self, savedir, loaddir):
-        from matplotlib.pyplot import imsave
         generated_image = self._generate_image(loaddir=loaddir, num_image=64)
-
-        # MAKE 64 IMAGES INTO 64x64 ONE IMAGE
-        plot_column_list = []
-        _plot_row = np.split(generated_image, 8)
-        for _plot in _plot_row:
-            _plot_column = np.split(np.squeeze(_plot), 8)
-            plot_column = np.squeeze(np.concatenate(_plot_column, axis=1))
-            plot_column_list.append(plot_column)
-        plot = np.concatenate(plot_column_list, axis=1)
-
-        imsave(path.join(savedir, 'generated_image.jpg'), plot)
+        image.save(savedir, generated_image, row=8, column=8)
 
 
     def _generate_image(self, loaddir, num_image):
@@ -79,10 +69,10 @@ class SessionDCGAN:
                 warn("meta graph not found")
                 return None
 
-            generated_image, noise_input, training = tf.get_collection("TEST_GENERATION_OPS")
+            generate_image_op, noise_input, training = tf.get_collection("TEST_GENERATION_OPS")
             noise = np.random.uniform(-1, 1, size=(num_image, noise_input.shape.as_list()[1]))
             feed_dict = {noise_input: noise, training: False}
 
-            image = generate_sess.run(generated_image, feed_dict=feed_dict)
-            image = (image+1.0)/2
-            return image
+            generated_image = generate_sess.run(generate_image_op, feed_dict=feed_dict)
+            generated_image = image.scale_in(generated_image)
+            return generated_image

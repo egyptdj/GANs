@@ -1,3 +1,4 @@
+from utils import image
 import tensorflow as tf
 
 
@@ -15,8 +16,8 @@ class GraphDCGAN:
             with tf.name_scope(self.scope+"_placeholders"):
                 self.image_input = tf.placeholder(tf.float32, shape=[None, image_shape[0], self.image_shape[1], self.image_shape[2]], name='image_input')
                 self.noise_input = tf.placeholder(tf.float32, shape=[None, self.noise_shape], name='noise_input')
-                self.discriminator_learning_rate = tf.placeholder(tf.float32, shape=[], name='learning_rate')
-                self.generator_learning_rate = tf.placeholder(tf.float32, shape=[], name='learning_rate')
+                self.discriminator_learning_rate = tf.placeholder(tf.float32, shape=[], name='discriminator_learning_rate')
+                self.generator_learning_rate = tf.placeholder(tf.float32, shape=[], name='generator_learning_rate')
                 self.training = tf.placeholder(tf.bool, shape=[], name='training')
 
 
@@ -52,8 +53,8 @@ class GraphDCGAN:
             # IMAGES
             with tf.name_scope(self.scope+'_image'):
                 self.generated_image = self.model.generator_model_output
-                generated_image_summary = tf.summary.image(name='generated_image', tensor=((self.generated_image+1.0)/2), max_outputs=self.image_shape[0], family='generated_image', collections=["GENERATOR_SUMMARY"])
-                target_image_summary = tf.summary.image(name='target_image', tensor=((self.image_input+1.0)/2), max_outputs=self.image_shape[0], family='target_image', collections=["GENERATOR_SUMMARY"])
+                generated_image_summary = tf.summary.image(name='generated_image', tensor=(image.scale_in(self.generated_image)), max_outputs=self.image_shape[0], family='generated_image', collections=["GENERATOR_SUMMARY"])
+                target_image_summary = tf.summary.image(name='target_image', tensor=(image.scale_in(self.image_input)), max_outputs=self.image_shape[0], family='target_image', collections=["GENERATOR_SUMMARY"])
                 self.image_summary = tf.summary.merge([generated_image_summary, target_image_summary])
 
         with tf.device(self.device):

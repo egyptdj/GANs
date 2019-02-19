@@ -13,7 +13,6 @@ def parse():
     parser.add_argument('-lD', '--discriminator_learning_rate', type=float, default=1e-3, help='learning rate of the discriminator training')
     parser.add_argument('-lG', '--generator_learning_rate', type=float, default=1e-4, help='learning rate of the generator training')
     parser.add_argument('-dS', '--savedir', type=str, default='./GAN', help='directory path to save full model')
-    parser.add_argument('-dL', '--loaddir', type=str, default='./GAN', help='directory path to save full model')
     parser.add_argument('--save_epoch', type=int, default=100, help='save model at every defined epochs')
 
     opt_dict = vars(parser.parse_args())
