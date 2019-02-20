@@ -9,6 +9,7 @@ def parse():
     parser.add_argument('-g', '--gpu_device', type=int, default=0, help='ID of gpu device to build graph')
     parser.add_argument('-e', '--num_epoch', type=int, default=1000, help='number of epochs to train')
     parser.add_argument('-b', '--batch_size', type=int, default=64, help='number of data to place in a minibatch')
+    parser.add_argument('-n', '--noise_shape', type=int, default=100, help='length of the noise vector')
     parser.add_argument('-s', '--scope', type=str, default='GAN', help='outermost scope of the network')
     parser.add_argument('-lD', '--discriminator_learning_rate', type=float, default=1e-3, help='learning rate of the discriminator training')
     parser.add_argument('-lG', '--generator_learning_rate', type=float, default=1e-4, help='learning rate of the generator training')

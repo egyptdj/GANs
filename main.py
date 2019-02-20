@@ -15,6 +15,7 @@ class GAN:
     def build(self):
         self.network.build_network(\
             batch_size=self.base_option['batch_size'], \
+            noise_shape=self.base_option['noise_shape'], \
             num_epoch=self.base_option['num_epoch'], \
             discriminator_learning_rate=self.base_option['discriminator_learning_rate'], \
             generator_learning_rate=self.base_option['generator_learning_rate'], \
