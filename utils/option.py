@@ -29,14 +29,15 @@ def parse():
     return opt_dict
 
 def gpu(device_id, log_device_placement=False, allow_soft_placement=True, per_process_gpu_memory_fraction=False, allow_growth=False):
-    if not tf.test.is_built_with_cuda or device_id==None:
-        if tf.test.is_gpu_available and not device_id==None: warnings.warn("GPU is available but is not built with CUDA. Using CPU for computation.")
-        gpu_config=tf.ConfigProto(log_device_placement=log_device_placement, allow_soft_placement=allow_soft_placement)
+    if not tf.test.is_gpu_available or device_id==None:
+        gpu_config = tf.ConfigProto(log_device_placement=log_device_placement, allow_soft_placement=allow_soft_placement)
         return gpu_config, "/CPU:0"
 
     else:
-        if per_process_gpu_memory_fraction: gpu_config = tf.ConfigProto(log_device_placement=log_device_placement, per_process_gpu_memory_fraction=per_process_gpu_memory_fraction, allow_soft_placement=allow_soft_placement)
-        else: gpu_config = tf.ConfigProto(log_device_placement=log_device_placement, allow_soft_placement=allow_soft_placement)
+        if per_process_gpu_memory_fraction:
+            gpu_config = tf.ConfigProto(log_device_placement=log_device_placement, per_process_gpu_memory_fraction=per_process_gpu_memory_fraction, allow_soft_placement=allow_soft_placement)
+        else:
+            gpu_config = tf.ConfigProto(log_device_placement=log_device_placement, allow_soft_placement=allow_soft_placement)
         gpu_config.gpu_options.allow_growth = allow_growth
 
         return gpu_config, "/device:GPU:{}".format(device_id)

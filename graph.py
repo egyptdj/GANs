@@ -28,32 +28,54 @@ class GraphGAN:
 
     def build_graph(self, type):
         # LOSSES
-        if type=='gan':
-            with tf.device(self.device):
-                with tf.name_scope(self.scope+"_loss"):
+        with tf.device(self.device):
+            with tf.name_scope(self.scope+"_loss"):
+                if type=='gan':
                     with tf.name_scope("generator_loss"):
                         self.generator_loss = tf.losses.sigmoid_cross_entropy(\
                             multi_class_labels=tf.ones_like(self.model.discriminator_fake_model_output), \
                             logits=self.model.discriminator_fake_model_feature, \
-                            weights=1.0, scope='generator_loss')
+                            weights=1.0, loss_collection="GENERATOR_LOSS", scope='generator_loss')
+
+                        self.generator_loss = tf.add_n(tf.get_collection("GENERATOR_LOSS"), name='generator_loss')
 
                     with tf.name_scope("discriminator_loss"):
                         self.discriminator_real_loss = tf.losses.sigmoid_cross_entropy(\
                             multi_class_labels=tf.ones_like(self.model.discriminator_real_model_output), \
                             logits=self.model.discriminator_real_model_feature, \
-                            weights=1.0, scope='discriminator_real_loss')
+                            weights=1.0, loss_collection="DISCRIMINATOR_LOSS", scope='discriminator_real_loss')
 
                         self.discriminator_fake_loss = tf.losses.sigmoid_cross_entropy(\
                             multi_class_labels=tf.zeros_like(self.model.discriminator_fake_model_output), \
                             logits=self.model.discriminator_fake_model_feature, \
-                            weights=1.0, scope='discriminator_fake_loss')
+                            weights=1.0, loss_collection="DISCRIMINATOR_LOSS", scope='discriminator_fake_loss')
 
-                        self.discriminator_loss = tf.add_n([self.discriminator_real_loss, self.discriminator_fake_loss], name='discriminator_loss')
-        elif type=='lsgan':
-            pass
+                        self.discriminator_loss = tf.add_n(tf.get_collection("DISCRIMINATOR_LOSS"), name='discriminator_loss')
 
-        else:
-            raise ValueError('unknown gan graph type: {}'.format(type))
+                elif type=='lsgan':
+                    with tf.name_scope("generator_loss"):
+                        self.generator_loss = tf.losses.mean_squared_error(\
+                            labels=tf.ones_like(self.model.discriminator_fake_model_output), \
+                            predictions=self.model.discriminator_fake_model_feature, \
+                            weights=0.5, loss_collection="GENERATOR_LOSS", scope='generator_loss')
+
+                        self.generator_loss = tf.add_n(tf.get_collection("GENERATOR_LOSS"), name='generator_loss')
+
+                    with tf.name_scope("discriminator_loss"):
+                        self.discriminator_real_loss = tf.losses.mean_squared_error(\
+                            labels=tf.ones_like(self.model.discriminator_real_model_output), \
+                            predictions=self.model.discriminator_real_model_feature, \
+                            weights=0.5, loss_collection="DISCRIMINATOR_LOSS", scope='discriminator_real_loss')
+
+                        self.discriminator_fake_loss = tf.losses.mean_squared_error(\
+                            labels=tf.zeros_like(self.model.discriminator_fake_model_output), \
+                            predictions=self.model.discriminator_fake_model_feature, \
+                            weights=0.5, loss_collection="DISCRIMINATOR_LOSS", scope='discriminator_fake_loss')
+
+                        self.discriminator_loss = tf.add_n(tf.get_collection("DISCRIMINATOR_LOSS"), name='discriminator_loss')
+
+                else:
+                    raise ValueError('unknown gan graph type: {}'.format(type))
 
 
         with tf.device(self.device):
