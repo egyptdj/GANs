@@ -25,6 +25,14 @@ class DatasetGAN:
             self.image_batch = (_image_batch/127.5)-1.0
             self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
 
+        elif type=='mnist':
+            from keras.datasets import mnist
+            (train_image, train_label), (test_image, test_label) = mnist.load_data()
+            _image_batch = np.concatenate([train_image, test_image], axis=0)
+            self.label_batch = np.concatenate([train_label, test_label], axis=0)
+            self.image_batch = (_image_batch/127.5)-1.0
+            self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
+
         else:
             raise ValueError('unknown dataset type: {}'.format(type))
 
