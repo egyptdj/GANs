@@ -16,13 +16,15 @@ class DatasetGAN:
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
             self.image_batch = (_image_batch/127.5)-1.0
             self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
+
         elif type=='cifar100':
             from keras.datasets import cifar100
-            (train_image, train_label), (test_image, test_label) = cifar10.load_data()
+            (train_image, train_label), (test_image, test_label) = cifar100.load_data()
             _image_batch = np.concatenate([train_image, test_image], axis=0)
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
             self.image_batch = (_image_batch/127.5)-1.0
             self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
+
         else:
             raise ValueError('unknown dataset type: {}'.format(type))
 
@@ -34,6 +36,7 @@ class DatasetGAN:
     def get_idx(self, shuffle=True):
         if shuffle:
             return np.random.permutation(self.train_index)
+
         else:
             return self.train_index
 
