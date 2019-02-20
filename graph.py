@@ -21,33 +21,40 @@ class GraphGAN:
                 self.training = tf.placeholder(tf.bool, shape=[], name='training')
 
 
-    def build_model(self, model):
+    def build_model(self, model, type):
         self.model = model
-        self.model.build_model(image_input=self.image_input, noise_input=self.noise_input, training=self.training)
+        self.model.build_model(image_input=self.image_input, noise_input=self.noise_input, type=type, training=self.training)
 
 
-    def build_graph(self):
+    def build_graph(self, type):
         # LOSSES
-        with tf.device(self.device):
-            with tf.name_scope(self.scope+"_loss"):
-                with tf.name_scope("generator_loss"):
-                    self.generator_loss = tf.losses.sigmoid_cross_entropy(\
-                        multi_class_labels=tf.ones_like(self.model.discriminator_fake_model_output), \
-                        logits=self.model.discriminator_fake_model_feature, \
-                        weights=1.0, scope='generator_loss')
+        if type=='gan':
+            with tf.device(self.device):
+                with tf.name_scope(self.scope+"_loss"):
+                    with tf.name_scope("generator_loss"):
+                        self.generator_loss = tf.losses.sigmoid_cross_entropy(\
+                            multi_class_labels=tf.ones_like(self.model.discriminator_fake_model_output), \
+                            logits=self.model.discriminator_fake_model_feature, \
+                            weights=1.0, scope='generator_loss')
 
-                with tf.name_scope("discriminator_loss"):
-                    self.discriminator_real_loss = tf.losses.sigmoid_cross_entropy(\
-                        multi_class_labels=tf.ones_like(self.model.discriminator_real_model_output), \
-                        logits=self.model.discriminator_real_model_feature, \
-                        weights=1.0, scope='discriminator_real_loss')
+                    with tf.name_scope("discriminator_loss"):
+                        self.discriminator_real_loss = tf.losses.sigmoid_cross_entropy(\
+                            multi_class_labels=tf.ones_like(self.model.discriminator_real_model_output), \
+                            logits=self.model.discriminator_real_model_feature, \
+                            weights=1.0, scope='discriminator_real_loss')
 
-                    self.discriminator_fake_loss = tf.losses.sigmoid_cross_entropy(\
-                        multi_class_labels=tf.zeros_like(self.model.discriminator_fake_model_output), \
-                        logits=self.model.discriminator_fake_model_feature, \
-                        weights=1.0, scope='discriminator_fake_loss')
+                        self.discriminator_fake_loss = tf.losses.sigmoid_cross_entropy(\
+                            multi_class_labels=tf.zeros_like(self.model.discriminator_fake_model_output), \
+                            logits=self.model.discriminator_fake_model_feature, \
+                            weights=1.0, scope='discriminator_fake_loss')
 
-                    self.discriminator_loss = tf.add_n([self.discriminator_real_loss, self.discriminator_fake_loss], name='discriminator_loss')
+                        self.discriminator_loss = tf.add_n([self.discriminator_real_loss, self.discriminator_fake_loss], name='discriminator_loss')
+        elif type=='lsgan':
+            pass
+
+        else:
+            raise ValueError('unknown gan graph type: {}'.format(type))
+
 
         with tf.device(self.device):
             # IMAGES
