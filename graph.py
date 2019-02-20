@@ -2,7 +2,7 @@ from utils import image
 import tensorflow as tf
 
 
-class GraphDCGAN:
+class GraphGAN:
     def __init__(self, device, scope):
         self.device = device
         self.scope = scope

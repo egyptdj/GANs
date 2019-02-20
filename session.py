@@ -4,7 +4,7 @@ from warnings import warn
 import numpy as np
 import tensorflow as tf
 
-class SessionDCGAN:
+class SessionGAN:
     def __init__(self, config):
         self.config = config
         self.run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)

@@ -2,7 +2,7 @@ import numpy as np
 from os import path
 
 
-class Cifar10:
+class DatasetCifar10:
     def __init__(self, batch_size, noise_shape):
         from keras.datasets import cifar10
 
