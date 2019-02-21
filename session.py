@@ -27,9 +27,12 @@ class SessionGAN:
             self.summary_writer_train = tf.summary.FileWriter(path.join(path.normpath(savedir),"summary","train"), graph=train_sess.graph)
             train_sess.graph.finalize()
 
+            # RUN EPOCHS
             for epoch in range(self.num_epoch):
                 train_idx = self.dataset.get_idx(shuffle=True)
                 train_sess.run(local_init)
+
+                # RUN STEPS IN EPOCH
                 for step, idx in enumerate(train_idx):
                     train_image_input = self.dataset.get_image_batch(idx=idx)
                     train_noise_input = self.dataset.get_noise_batch()
@@ -40,15 +43,17 @@ class SessionGAN:
                     if epoch==0 and step==0: self.summary_writer_train.add_run_metadata(self.run_metadata, 'discriminator')
 
                     # UPDATE GENERATOR
+                    if ('wgan' in self.graph.type) and ((step+1)%5==0): continue
                     train_generator_summary, _ = train_sess.run(self.graph.generator_train, options=self.run_options, run_metadata=self.run_metadata, \
                         feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.training: True, self.graph.generator_learning_rate: self.generator_learning_rate})
                     if epoch==0 and step==0: self.summary_writer_train.add_run_metadata(self.run_metadata, 'generator')
 
+                # ADD SUMMARY
                 self.summary_writer_train.add_summary(train_discriminator_summary, epoch)
                 self.summary_writer_train.add_summary(train_generator_summary, epoch)
 
+                # SAVE MODEL
                 if (epoch+1)%save_epoch==0: self.graph.generator_saver.save(train_sess, path.join(path.normpath(savedir),"model","generator_model.ckpt"))
-
             self.graph.generator_saver.save(train_sess, path.join(path.normpath(savedir),"model","generator_model.ckpt"))
 
 
@@ -69,10 +74,12 @@ class SessionGAN:
                 warn("meta graph not found")
                 return None
 
+            # SET VARIABLES
             generate_image_op, noise_input, training = tf.get_collection("TEST_GENERATION_OPS")
             noise = np.random.uniform(-1, 1, size=(num_image, noise_input.shape.as_list()[1]))
             feed_dict = {noise_input: noise, training: False}
 
+            # GENERATE IMAGE
             generated_image = generate_sess.run(generate_image_op, feed_dict=feed_dict)
             generated_image = image.scale_in(generated_image)
             return generated_image

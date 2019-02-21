@@ -21,7 +21,6 @@ class GAN:
             self._test()
 
 
-
     def _initialize(self):
         self.network = NetworkGAN(\
             device=self.device, \
