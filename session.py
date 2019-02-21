@@ -1,8 +1,8 @@
+import numpy as np
+import tensorflow as tf
 from os import path
 from utils import image
 from warnings import warn
-import numpy as np
-import tensorflow as tf
 
 class SessionGAN:
     def __init__(self, config):

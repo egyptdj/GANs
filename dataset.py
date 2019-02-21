@@ -1,5 +1,6 @@
 import numpy as np
 from os import path
+from utils import image
 
 
 class DatasetGAN:
@@ -14,7 +15,7 @@ class DatasetGAN:
             (train_image, train_label), (test_image, test_label) = cifar10.load_data()
             _image_batch = np.concatenate([train_image, test_image], axis=0)
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
-            self.image_batch = (_image_batch/127.5)-1.0
+            self.image_batch = image.scale_out(_image_batch/255.0)
             self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
 
         elif type=='cifar100':
@@ -22,15 +23,17 @@ class DatasetGAN:
             (train_image, train_label), (test_image, test_label) = cifar100.load_data()
             _image_batch = np.concatenate([train_image, test_image], axis=0)
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
-            self.image_batch = (_image_batch/127.5)-1.0
+            self.image_batch = image.scale_out(_image_batch/255.0)
             self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
 
         elif type=='mnist':
             from keras.datasets import mnist
             (train_image, train_label), (test_image, test_label) = mnist.load_data()
+            train_image, test_image = np.pad(train_image, ((0,0), (2,2), (2,2)), 'edge'), np.pad(test_image, ((0,0), (2,2), (2,2)), 'edge')
+            train_image, test_image = train_image[...,np.newaxis], test_image[...,np.newaxis]
             _image_batch = np.concatenate([train_image, test_image], axis=0)
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
-            self.image_batch = (_image_batch/127.5)-1.0
+            self.image_batch = image.scale_out(_image_batch/255.0)
             self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
 
         else:

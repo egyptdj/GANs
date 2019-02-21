@@ -1,11 +1,14 @@
+import numpy as np
 from matplotlib.pyplot import imsave
 
 
 def scale_in(image):
     return (image+1.0)/2.0
 
+
 def scale_out(image):
     return (image*2.0)-1.0
+
 
 def save(savedir, image, row, column):
     plot_column_list = []
@@ -16,4 +19,4 @@ def save(savedir, image, row, column):
         plot_column_list.append(plot_column)
     plot = np.concatenate(plot_column_list, axis=1)
 
-    imsave(path.join(savedir, 'result.jpg'), plot)
+    imsave(path.join(savedir, 'result_GANs.jpg'), plot)

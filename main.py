@@ -8,13 +8,27 @@ class GAN:
         self.config, self.device = option.gpu(device_id=self.base_option['gpu_device'])
 
 
-    def initialize(self):
+    def run(self):
+        self._initialize()
+
+        if self.base_option['loaddir']:
+            self._test()
+
+        else:
+            self.base_option['loaddir'] = self.base_option['savedir']
+            self._build()
+            self._train()
+            self._test()
+
+
+
+    def _initialize(self):
         self.network = NetworkGAN(\
             device=self.device, \
             config=self.config)
 
 
-    def build(self):
+    def _build(self):
         self.network.build_network(\
             batch_size=self.base_option['batch_size'], \
             noise_shape=self.base_option['noise_shape'], \
@@ -27,21 +41,18 @@ class GAN:
             scope=self.base_option['scope'])
 
 
-    def train(self):
+    def _train(self):
         self.network.train(\
             savedir=self.base_option['savedir'], \
             save_epoch=self.base_option['save_epoch'])
 
 
-    def test(self):
+    def _test(self):
         self.network.test(\
             savedir=self.base_option['savedir'], \
-            loaddir=self.base_option['savedir'])
+            loaddir=self.base_option['loaddir'])
 
 
 if __name__ == "__main__":
     gan = GAN()
-    gan.initialize()
-    gan.build()
-    gan.train()
-    gan.test()
+    gan.run()

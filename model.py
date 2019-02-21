@@ -1,5 +1,5 @@
-import tensorflow as tf
 import model_components
+import tensorflow as tf
 
 
 class ModelGAN:
@@ -24,5 +24,6 @@ class ModelGAN:
 
                 with tf.name_scope("discriminator_models"):
                     self.discriminator_real_model_output, self.discriminator_real_model_feature = self.discriminator.build(image_input=image_input, model_scope='discriminator_real', reuse=True)
+
         else:
             raise ValueError('unknown gan model type: {}'.format(type))

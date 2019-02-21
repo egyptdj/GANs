@@ -1,5 +1,5 @@
-from utils import image
 import tensorflow as tf
+from utils import image
 
 
 class GraphGAN:
@@ -76,7 +76,6 @@ class GraphGAN:
 
                 else:
                     raise ValueError('unknown gan graph type: {}'.format(type))
-
 
         with tf.device(self.device):
             # IMAGES
