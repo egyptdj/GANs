@@ -16,7 +16,7 @@ class DatasetGAN:
             _image_batch = np.concatenate([train_image, test_image], axis=0)
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
             self.image_batch = image.scale_out(_image_batch/255.0)
-            self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
+            self.train_index = np.arange(start=0, stop=self.image_batch.shape[0]-self.batch_size, step=self.batch_size, dtype=int)
 
         elif type=='cifar100':
             from keras.datasets import cifar100
@@ -24,7 +24,7 @@ class DatasetGAN:
             _image_batch = np.concatenate([train_image, test_image], axis=0)
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
             self.image_batch = image.scale_out(_image_batch/255.0)
-            self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
+            self.train_index = np.arange(start=0, stop=self.image_batch.shape[0]-self.batch_size, step=self.batch_size, dtype=int)
 
         elif type=='mnist':
             from keras.datasets import mnist
@@ -34,7 +34,7 @@ class DatasetGAN:
             _image_batch = np.concatenate([train_image, test_image], axis=0)
             self.label_batch = np.concatenate([train_label, test_label], axis=0)
             self.image_batch = image.scale_out(_image_batch/255.0)
-            self.train_index = np.arange(start=0, stop=self.image_batch.shape[0], step=self.batch_size, dtype=int)
+            self.train_index = np.arange(start=0, stop=self.image_batch.shape[0]-self.batch_size, step=self.batch_size, dtype=int)
 
         else:
             raise ValueError('unknown dataset type: {}'.format(type))
