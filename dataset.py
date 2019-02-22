@@ -41,7 +41,7 @@ class DatasetGAN:
 
 
     def get_shape(self):
-        return self.image_batch.shape[1:], self.noise_shape
+        return self.image_batch.shape[1:], self.noise_shape, self.label_batch.max()+1
 
 
     def get_idx(self, shuffle=True):
@@ -56,9 +56,9 @@ class DatasetGAN:
         return self.image_batch[idx:idx+self.batch_size]
 
 
-    def get_label_batch(self, idx):
-        return self.label_batch[idx:idx+self.batch_size]
-
-
     def get_noise_batch(self):
         return np.random.uniform(-1, 1, size=(self.batch_size, self.noise_shape))
+
+
+    def get_label_batch(self, idx):
+        return self.label_batch[idx:idx+self.batch_size]

@@ -16,7 +16,7 @@ def parse():
     parser.add_argument('-lG', '--generator_learning_rate', type=float, default=1e-4, help='learning rate of the generator training')
     parser.add_argument('-tD', '--dataset_type', type=str, default='cifar10', help='type of the dataset [mnist/cifar10/cifar100]')
     parser.add_argument('-tM', '--model_type', type=str, default='dcgan', help='type of the GAN model [gan/dcgan]')
-    parser.add_argument('-tG', '--graph_type', type=str, default='gan', help='type of the GAN graph [gan/lsgan/wgan/wgan-gp]')
+    parser.add_argument('-tG', '--graph_type', type=str, default='gan', help='type of the GAN graph [gan/lsgan/wgan/wgan-gp/geogan]')
     parser.add_argument('-dS', '--savedir', type=str, default='./GANs', help='directory path to save the trained generator model and/or the resulting image')
     parser.add_argument('-dL', '--loaddir', type=str, default=None, help='directory path to load a saved generator model (optional).')
     parser.add_argument('--save_epoch', type=int, default=50, help='save model at every specified epochs')
