@@ -12,7 +12,7 @@ def parse():
     parser.add_argument('-b', '--batch_size', type=int, default=64, help='number of data to place in a minibatch')
     parser.add_argument('-n', '--noise_shape', type=int, default=100, help='length of the noise vector')
     parser.add_argument('-tD', '--dataset_type', type=str, default='mnist', help='type of the dataset [mnist/cifar10/cifar100]')
-    parser.add_argument('-tM', '--model_type', type=str, default='gan', help='type of the GAN model [gan/dcgan]')
+    parser.add_argument('-tM', '--model_type', type=str, default='gan', help='type of the GAN model [gan/cgan/dcgan]')
     parser.add_argument('-tG', '--graph_type', type=str, default='gan', help='type of the GAN graph [gan/lsgan/wgan/wgan-gp/geogan]')
     parser.add_argument('-lD', '--discriminator_learning_rate', type=float, default=1e-3, help='learning rate of the discriminator training')
     parser.add_argument('-lG', '--generator_learning_rate', type=float, default=1e-4, help='learning rate of the generator training')

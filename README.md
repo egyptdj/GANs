@@ -35,6 +35,7 @@ Datasets
 
 Models
 - GAN
+- CGAN
 - DCGAN
 
 Graphs
@@ -76,6 +77,7 @@ Other model options are being updated.
 
 ## Reference
 - GAN: [Generative Adversarial Nets](http://papers.nips.cc/paper/5423-generative-adversarial-nets)
+- CGAN: [Generative Adversarial Nets](https://arxiv.org/abs/1411.1784)
 - DCGAN: [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/abs/1511.06434)
 - LSGAN: [Least Squares Generative Adversarial Networks](https://arxiv.org/abs/1611.04076)
 - WGAN: [Wasserstein GAN](https://arxiv.org/abs/1701.07875)

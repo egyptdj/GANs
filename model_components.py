@@ -10,7 +10,7 @@ class DiscriminatorComponentGAN:
         self.training = training
 
 
-    def build(self, image_input, label_input, model_scope, reuse=tf.AUTO_REUSE):
+    def build(self, image_input, label_input, label_shape, model_scope, reuse=tf.AUTO_REUSE):
         x = image_input
         y = label_input
 
@@ -55,9 +55,30 @@ class DiscriminatorComponentGAN:
 
                         _x = tf.nn.sigmoid(_x, name='sigmoid')
 
+                    # CONDITIONAL GAN
+                    elif self.type=='cgan':
+                        _y = tf.one_hot(_y, label_shape, name='label_onehot')
+                        _x = tf.concat([_x, tf.tile(_y[:, tf.newaxis, tf.newaxis, :], multiples=[1, _x.shape.as_list()[1], _x.shape.as_list()[2], 1], name=self.scope+'_convconcat_tile0')], axis=3, name=self.scope+'_convconcat_concat0')
+                        _x = tf.layers.conv2d(inputs=_x, filters=64, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='conv0')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu0')
+                        _x = tf.concat([_x, tf.tile(_y[:, tf.newaxis, tf.newaxis, :], multiples=[1, _x.shape.as_list()[1], _x.shape.as_list()[2], 1], name=self.scope+'_convconcat_tile1')], axis=3, name=self.scope+'_convconcat_concat1')
+                        _x = tf.layers.conv2d(inputs=_x, filters=128, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='conv1')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm1')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu1')
+                        _x = tf.reshape(_x, shape=[-1, _x.shape.as_list()[1]*_x.shape.as_list()[2]*128], name='reshape0')
+                        _x = tf.concat([_x, _y], axis=1, name='image_label_concat0')
+                        _x = tf.layers.dense(inputs=_x, units=256, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm_2')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu2')
+                        _x = tf.concat([_x, _y], axis=1, name='image_label_concat1')
+                        _x = tf.layers.dense(inputs=_x, units=1, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected1')
+                        _xl = _x
+
+                        _x = tf.nn.sigmoid(_x, name='sigmoid')
+
                     # SELF-ATTENTION GAN
                     elif self.type=='sagan':
-                        pass
+                        raise NotImplementedError('{} is to be updated'.format(type))
 
                     else:
                         raise ValueError('unknown gan model type: {}'.format(type))
@@ -75,7 +96,7 @@ class GeneratorComponentGAN:
         self.training = training
 
 
-    def build(self, noise_input, image_input, label_input, model_scope, reuse=tf.AUTO_REUSE):
+    def build(self, noise_input, image_input, label_input, label_shape, model_scope, reuse=tf.AUTO_REUSE):
         x = image_input # only used for checking the shape
         y = label_input
         z = noise_input
@@ -123,25 +144,28 @@ class GeneratorComponentGAN:
 
                     # CONDITIONAL GAN
                     elif self.type=='cgan':
-                        _z = tf.layers.dense(inputs=_z, units=(_x[0]//16)*(_x[1]//16)*512, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
-                        _z = tf.reshape(_z, shape=[-1, _x[0]//16, _x[1]//16, 512], name='reshape_0')
+                        _y = tf.one_hot(_y, label_shape, name='label_onehot')
+                        _z = tf.concat([_z, _y], axis=1, name='noise_label_concat0')
+                        _z = tf.layers.dense(inputs=_z, units=1024, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
                         _z = tf.layers.batch_normalization(inputs=_z, training=self.training, name='batchnorm0')
                         _z = tf.nn.relu(_z, name='relu0')
-                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=256, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv0')
+                        _z = tf.concat([_z, _y], axis=1, name='noise_label_concat1')
+                        _z = tf.layers.dense(inputs=_z, units=(_x[0]//4)*(_x[1]//4)*128, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected1')
                         _z = tf.layers.batch_normalization(inputs=_z, training=self.training, name='batchnorm1')
                         _z = tf.nn.relu(_z, name='relu1')
-                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=128, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv1')
+                        _z = tf.reshape(_z, shape=[-1, _x[0]//4, _x[1]//4, 128], name='reshape0')
+                        _z = tf.concat([_z, tf.tile(_y[:, tf.newaxis, tf.newaxis, :], multiples=[1, _x[0]//4, _x[1]//4, 1], name=self.scope+'_convconcat_tile0')], axis=3, name=self.scope+'_convconcat_concat0')
+                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=128, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv0')
                         _z = tf.layers.batch_normalization(inputs=_z, training=self.training, name='batchnorm2')
                         _z = tf.nn.relu(_z, name='relu2')
-                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=64, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv2')
-                        _z = tf.layers.batch_normalization(inputs=_z, training=self.training, name='batchnorm3')
-                        _z = tf.nn.relu(_z, name='relu3')
-                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=_x[2], kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv3')
-                        _z = tf.nn.tanh(_z, name='tanh0')
+                        _z = tf.concat([_z, tf.tile(_y[:, tf.newaxis, tf.newaxis, :], multiples=[1, _x[0]//2, _x[1]//2, 1], name=self.scope+'_convconcat_tile1')], axis=3, name=self.scope+'_convconcat_concat1')
+                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=_x[2], kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv1')
+                        _z = tf.nn.sigmoid(_z, name='sigmoid')
+                        _z = image.scale_out(_z)
 
                     # SELF-ATTENTION GAN
                     elif self.type=='sagan':
-                        pass
+                        raise NotImplementedError('{} is to be updated'.format(type))
 
                     else:
                         raise ValueError('unknown gan model type: {}'.format(type))

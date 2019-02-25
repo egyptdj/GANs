@@ -35,17 +35,18 @@ class SessionGAN:
                 # RUN STEPS IN EPOCH
                 for step, idx in enumerate(train_idx):
                     train_image_input = self.dataset.get_image_batch(idx=idx)
+                    train_label_input = self.dataset.get_label_batch(idx=idx)
                     train_noise_input = self.dataset.get_noise_batch()
 
                     # UPDATE DISCRIMINATOR
                     train_discriminator_summary, _ = train_sess.run(self.graph.discriminator_train, options=self.run_options, run_metadata=self.run_metadata, \
-                        feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.training: True, self.graph.discriminator_learning_rate: self.discriminator_learning_rate})
+                        feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.discriminator_learning_rate: self.discriminator_learning_rate})
                     if epoch==0 and step==0: self.summary_writer_train.add_run_metadata(self.run_metadata, 'discriminator')
 
                     # UPDATE GENERATOR
                     if ('wgan' in self.graph.type) and ((step+1)%5==0): continue
                     train_generator_summary, _ = train_sess.run(self.graph.generator_train, options=self.run_options, run_metadata=self.run_metadata, \
-                        feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.training: True, self.graph.generator_learning_rate: self.generator_learning_rate})
+                        feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.generator_learning_rate: self.generator_learning_rate})
                     if epoch==0 and step==0: self.summary_writer_train.add_run_metadata(self.run_metadata, 'generator')
 
                 # ADD SUMMARY
