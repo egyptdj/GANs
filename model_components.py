@@ -61,11 +61,11 @@ class DiscriminatorComponentGAN:
                         _x = tf.concat([_x, tf.tile(_y[:, tf.newaxis, tf.newaxis, :], multiples=[1, _xs[0], _xs[1], 1], name=self.scope+'_convconcat_tile0')], axis=3, name=self.scope+'_convconcat_concat0')
                         _x = tf.layers.conv2d(inputs=_x, filters=64, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='conv0')
                         _x = tf.nn.leaky_relu(_x, name='leakyrelu0')
-                        _x = tf.concat([_x, tf.tile(_y[:, tf.newaxis, tf.newaxis, :], multiples=[1, _xs[0], _xs[1], 1], name=self.scope+'_convconcat_tile1')], axis=3, name=self.scope+'_convconcat_concat1')
+                        _x = tf.concat([_x, tf.tile(_y[:, tf.newaxis, tf.newaxis, :], multiples=[1, _xs[0]//2, _xs[1]//2, 1], name=self.scope+'_convconcat_tile1')], axis=3, name=self.scope+'_convconcat_concat1')
                         _x = tf.layers.conv2d(inputs=_x, filters=128, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='conv1')
                         _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm1')
                         _x = tf.nn.leaky_relu(_x, name='leakyrelu1')
-                        _x = tf.reshape(_x, shape=[-1, _xs[0]*_xs[1]*128], name='reshape0')
+                        _x = tf.reshape(_x, shape=[-1, (_xs[0]//4)*(_xs[1]//4)*128], name='reshape0')
                         _x = tf.concat([_x, _y], axis=1, name='image_label_concat0')
                         _x = tf.layers.dense(inputs=_x, units=256, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
                         _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm_2')
@@ -77,7 +77,7 @@ class DiscriminatorComponentGAN:
                         _x = tf.nn.sigmoid(_x, name='sigmoid')
 
                     # SELF-ATTENTION GAN
-                    elif self.type=='sagan':
+                    elif self.type=='acgan' or self.type=='sagan':
                         raise NotImplementedError('{} is to be updated'.format(type))
 
                     else:
@@ -163,7 +163,7 @@ class GeneratorComponentGAN:
                         _z = image.scale_out(_z)
 
                     # SELF-ATTENTION GAN
-                    elif self.type=='sagan':
+                    elif self.type=='acgan' or self.type=='sagan':
                         raise NotImplementedError('{} is to be updated'.format(type))
 
                     else:
@@ -193,4 +193,4 @@ class ClassifierComponentGAN:
 
                     # AUXILIARY CLASSIFIER GAN
                     if self.type=='acgan':
-                        raise NotImplementedError
+                        raise NotImplementedError('{} is to be updated'.format(type))

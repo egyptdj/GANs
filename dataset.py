@@ -21,7 +21,7 @@ class DatasetGAN:
 
             # PREPARE LABEL BATCH
             _label_batch = np.concatenate([train_label, test_label], axis=0)
-            self.label_batch = np.zeros(shape=[self.batch_size, self.noise_shape])
+            self.label_batch = np.zeros(shape=[_label_batch.shape[0], _label_batch.max()+1])
             for i, label in enumerate(_label_batch): self.label_batch[i, label] = 1
 
             # PREPARE TRAIN INDEX
@@ -38,7 +38,7 @@ class DatasetGAN:
 
             # PREPARE LABEL BATCH
             _label_batch = np.concatenate([train_label, test_label], axis=0)
-            self.label_batch = np.zeros(shape=[self.batch_size, self.noise_shape])
+            self.label_batch = np.zeros(shape=[_label_batch.shape[0], _label_batch.max()+1])
             for i, label in enumerate(_label_batch): self.label_batch[i, label] = 1
 
             # PREPARE TRAIN INDEX
@@ -57,7 +57,7 @@ class DatasetGAN:
 
             # PREPARE LABEL BATCH
             _label_batch = np.concatenate([train_label, test_label], axis=0)
-            self.label_batch = np.zeros(shape=[self.batch_size, self.noise_shape])
+            self.label_batch = np.zeros(shape=[_label_batch.shape[0], _label_batch.max()+1])
             for i, label in enumerate(_label_batch): self.label_batch[i, label] = 1
 
             # PREPARE TRAIN INDEX
@@ -68,7 +68,7 @@ class DatasetGAN:
 
 
     def get_shape(self):
-        return self.image_batch.shape[1:], self.noise_shape, self.label_batch.max()+1
+        return self.image_batch.shape[1:], self.noise_shape, self.label_batch.shape[1]
 
 
     def get_idx(self, shuffle=True):

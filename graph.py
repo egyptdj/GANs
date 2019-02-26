@@ -16,7 +16,7 @@ class GraphGAN:
         with tf.device(self.device):
             with tf.name_scope(self.scope+"_placeholders"):
                 self.image_input = tf.placeholder(tf.float32, shape=[None, image_shape[0], self.image_shape[1], self.image_shape[2]], name='image_input')
-                self.label_input = tf.placeholder(tf.uint8, shape=[None, label_shape], name='label_input')
+                self.label_input = tf.placeholder(tf.float32, shape=[None, label_shape], name='label_input')
                 self.noise_input = tf.placeholder(tf.float32, shape=[None, self.noise_shape], name='noise_input')
                 self.discriminator_learning_rate = tf.placeholder(tf.float32, shape=[], name='discriminator_learning_rate')
                 self.generator_learning_rate = tf.placeholder(tf.float32, shape=[], name='generator_learning_rate')
