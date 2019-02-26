@@ -4,6 +4,7 @@ from os import path
 from utils import image
 from warnings import warn
 
+
 class SessionGAN:
     def __init__(self, config):
         self.config = config
@@ -59,8 +60,8 @@ class SessionGAN:
 
 
     def test_graph(self, savedir, loaddir):
-        generated_image = self._generate_image(loaddir=loaddir, num_image=64)
-        image.save(savedir, generated_image, row=8, column=8)
+        generated_image = self._generate_image(loaddir=loaddir, num_image=100)
+        image.save(savedir, generated_image, row=10, column=10)
 
 
     def _generate_image(self, loaddir, num_image):

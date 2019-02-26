@@ -34,7 +34,6 @@ class DiscriminatorComponentGAN:
                         _x = tf.nn.leaky_relu(_x, name='leakyrelu2')
                         _x = tf.layers.dense(inputs=_x, units=1, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected1')
                         _xl = _x
-
                         _x = tf.nn.sigmoid(_x, name='sigmoid')
 
                     # DEEP CONVOLUTIONAL GAN
@@ -53,7 +52,6 @@ class DiscriminatorComponentGAN:
                         _x = tf.layers.flatten(inputs=_x, name='flatten')
                         _x = tf.layers.dense(inputs=_x, units=1, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
                         _xl = _x
-
                         _x = tf.nn.sigmoid(_x, name='sigmoid')
 
                     # CONDITIONAL GAN
@@ -73,11 +71,14 @@ class DiscriminatorComponentGAN:
                         _x = tf.concat([_x, _y], axis=1, name='image_label_concat1')
                         _x = tf.layers.dense(inputs=_x, units=1, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected1')
                         _xl = _x
-
                         _x = tf.nn.sigmoid(_x, name='sigmoid')
 
                     # SELF-ATTENTION GAN
-                    elif self.type=='acgan' or self.type=='sagan':
+                    elif self.type=='sagan':
+                        raise NotImplementedError('{} is to be updated'.format(type))
+
+                    # AUXILIARY CLASSIFIER GAN
+                    elif self.type=='acgan':
                         raise NotImplementedError('{} is to be updated'.format(type))
 
                     else:
@@ -163,7 +164,11 @@ class GeneratorComponentGAN:
                         _z = image.scale_out(_z)
 
                     # SELF-ATTENTION GAN
-                    elif self.type=='acgan' or self.type=='sagan':
+                    elif self.type=='sagan':
+                        raise NotImplementedError('{} is to be updated'.format(type))
+
+                    # AUXILIARY CLASSIFIER GAN
+                    elif self.type=='acgan':
                         raise NotImplementedError('{} is to be updated'.format(type))
 
                     else:

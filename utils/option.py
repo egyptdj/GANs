@@ -27,7 +27,7 @@ def parse():
     opt_dict = vars(parser.parse_args())
 
     if not os.path.exists(opt_dict['savedir']): os.makedirs(opt_dict['savedir'])
-    with open(os.path.join(opt_dict['savedir'],"argv.csv"), 'w') as f:
+    with open(os.path.join(opt_dict['savedir'],"argv.csv"), 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(opt_dict.items())
 
