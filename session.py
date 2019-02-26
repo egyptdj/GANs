@@ -76,9 +76,15 @@ class SessionGAN:
                 return None
 
             # SET VARIABLES
-            generate_image_op, noise_input, training = tf.get_collection("TEST_GENERATION_OPS")
-            noise = np.random.uniform(-1, 1, size=(num_image, noise_input.shape.as_list()[1]))
-            feed_dict = {noise_input: noise, training: False}
+            generate_image_op, label_input, noise_input, training = tf.get_collection("TEST_GENERATION_OPS")
+            label_shape = label_input.shape.as_list()[1]
+            noise_shape = noise_input.shape.as_list()[1]
+
+            # DEFINE LABEL AND NOISE
+            label = np.zeros(shape=(num_image, label_shape))
+            for i in range(num_image): label[i, i%label_shape] = 1 # condition one sample per one label
+            noise = np.random.uniform(-1, 1, size=(num_image, noise_shape))
+            feed_dict = {label_input: noise_input: noise, training: False}
 
             # GENERATE IMAGE
             generated_image = generate_sess.run(generate_image_op, feed_dict=feed_dict)
