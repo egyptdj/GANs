@@ -84,7 +84,7 @@ class SessionGAN:
             label = np.zeros(shape=(num_image, label_shape))
             for i in range(num_image): label[i, i%label_shape] = 1 # condition one sample per one label
             noise = np.random.uniform(-1, 1, size=(num_image, noise_shape))
-            feed_dict = {label_input: noise_input: noise, training: False}
+            feed_dict = {label_input: label, noise_input: noise, training: False}
 
             # GENERATE IMAGE
             generated_image = generate_sess.run(generate_image_op, feed_dict=feed_dict)
