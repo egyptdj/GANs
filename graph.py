@@ -177,7 +177,7 @@ class GraphGAN:
                 with tf.name_scope("generator_optimize"):
                     generator_optimizer = tf.train.RMSPropOptimizer(learning_rate=self.generator_learning_rate, name='generator_optimizer')
                     generator_gradients_and_variables = generator_optimizer.compute_gradients(loss=self.generator_loss, var_list=generator_variables)
-                    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)+tf.get_collection("GENERATOR_OPS")):
+                    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='generator')+tf.get_collection("GENERATOR_OPS")):
                         self.generator_optimize = generator_optimizer.apply_gradients(generator_gradients_and_variables, name='generator_train')
 
                 with tf.name_scope("discriminator_optimize"):
@@ -188,7 +188,7 @@ class GraphGAN:
 
                     discriminator_optimizer = tf.train.RMSPropOptimizer(learning_rate=self.discriminator_learning_rate, name='discriminator_optimizer')
                     discriminator_gradients_and_variables = discriminator_optimizer.compute_gradients(loss=self.discriminator_loss, var_list=discriminator_variables)
-                    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)+tf.get_collection("DISCRIMINATOR_OPS")):
+                    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='discriminator')+tf.get_collection("DISCRIMINATOR_OPS")):
                         self.discriminator_optimize = discriminator_optimizer.apply_gradients(discriminator_gradients_and_variables, name='discriminator_train')
 
                 self.generator_train = [self.generator_summary, self.generator_optimize]
