@@ -128,9 +128,9 @@ class GraphGAN:
                 if regularizer=='modeseek':
                     with tf.name_scope(self.regularizer):
                         _img1, _img2 = tf.split(self.generated_image, 2, axis=0, name='image_split')
-                        _noise1, _noise2 = tf.split(self.generated_image, 2, axis=0, name='noise_split')
-                        _modeseek_loss = tf.reduce_mean(tf.abs(_img1-_img2)) / tf.reduce_mean(tf.abs(_noise1-_noise2))
-                        self.regularizer_loss = 1 / (_modeseek_loss + 1e-8)
+                        _noise1, _noise2 = tf.split(self.noise_input, 2, axis=0, name='noise_split')
+                        modeseek_loss = tf.reduce_mean(tf.abs(_img1-_img2), name='generated_image_distance') / tf.reduce_mean(tf.abs(_noise1-_noise2), name='noise_distance')
+                        self.regularizer_loss = 1 / (modeseek_loss + 1e-8)
                         tf.add_to_collection("GENERATOR_LOSS", self.regularizer_loss)
 
                 elif regularizer=='spectralnorm':
@@ -138,10 +138,6 @@ class GraphGAN:
 
                 else:
                     pass
-
-        # GET FINAL LOSS
-        self.generator_loss = tf.add_n(tf.get_collection("GENERATOR_LOSS"), name='generator_loss')
-        self.discriminator_loss = tf.add_n(tf.get_collection("DISCRIMINATOR_LOSS"), name='discriminator_loss')
 
         # IMAGES
         with tf.device(self.device):
@@ -166,9 +162,9 @@ class GraphGAN:
                 _ = tf.summary.scalar(name='discriminator_loss', tensor=discriminator_loss_mean, collections=["DISCRIMINATOR_SUMMARY"], family='01_loss_total')
                 _ = tf.summary.scalar(name='discriminator_real_loss', tensor=discriminator_real_loss_mean, collections=["DISCRIMINATOR_SUMMARY"], family='02_loss_discriminator')
                 _ = tf.summary.scalar(name='discriminator_fake_loss', tensor=discriminator_fake_loss_mean, collections=["DISCRIMINATOR_SUMMARY"], family='02_loss_discriminator')
-                if 'gp' in type: _ = tf.summary.scalar(name='gradient_penalty', tensor=gradient_penalty_mean, collections=["DISCRIMINATOR_SUMMARY"], family='02_loss_discriminator')
                 _ = tf.summary.scalar(name='generator_learning_rate', tensor=self.generator_learning_rate, collections=["GENERATOR_SUMMARY"], family='03_hyperparameter')
                 _ = tf.summary.scalar(name='discriminator_learning_rate', tensor=self.discriminator_learning_rate, collections=["DISCRIMINATOR_SUMMARY"], family='03_hyperparameter')
+                if 'gp' in type: _ = tf.summary.scalar(name='gradient_penalty', tensor=gradient_penalty_mean, collections=["DISCRIMINATOR_SUMMARY"], family='02_loss_discriminator')
                 if regularizer: _ = tf.summary.scalar(name='regularizer_loss', tensor=regularizer_loss_mean, collections=["DISCRIMINATOR_SUMMARY"], family='04_regularizer')
 
             with tf.name_scope(self.scope+'_summary'+'_merge'):
@@ -179,6 +175,10 @@ class GraphGAN:
         # OPTIMIZATIONS
         with tf.device(self.device):
             with tf.name_scope(self.scope+'_optimize'):
+                with tf.name_scope('losses'):
+                    self.generator_loss = tf.add_n(tf.get_collection("GENERATOR_LOSS"), name='generator_loss')
+                    self.discriminator_loss = tf.add_n(tf.get_collection("DISCRIMINATOR_LOSS"), name='discriminator_loss')
+
                 with tf.name_scope("train_variables"):
                     generator_variables = tf.trainable_variables(scope='generator')
                     discriminator_variables = tf.trainable_variables(scope='discriminator')
