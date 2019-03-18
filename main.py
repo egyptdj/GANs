@@ -37,6 +37,7 @@ class GAN:
             dataset_type=self.base_option['dataset_type'], \
             model_type=self.base_option['model_type'], \
             graph_type=self.base_option['graph_type'], \
+            regularizer_type=self.base_option['regularizer_type'], \
             scope=self.base_option['scope'])
 
 

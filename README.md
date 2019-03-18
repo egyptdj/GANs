@@ -45,6 +45,9 @@ Graphs
 - WGAN-GP
 - GEOGAN
 
+Regularizers
+- Mode-seek
+
 Other model options are being updated.
 
 ## Implementation
@@ -77,9 +80,10 @@ Other model options are being updated.
 
 ## Reference
 - GAN: [Generative Adversarial Nets](http://papers.nips.cc/paper/5423-generative-adversarial-nets)
-- CGAN: [Generative Adversarial Nets](https://arxiv.org/abs/1411.1784)
+- CGAN: [Conditional Generative Adversarial Nets](https://arxiv.org/abs/1411.1784)
 - DCGAN: [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/abs/1511.06434)
 - LSGAN: [Least Squares Generative Adversarial Networks](https://arxiv.org/abs/1611.04076)
 - WGAN: [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
 - WGAN-GP: [Improved Training of Wasserstein GANs](https://arxiv.org/abs/1704.00028)
 - GEOGAN: [Geometric GAN](https://arxiv.org/abs/1705.02894)
+- MODESEEK: [Mode Seeking Generative Adversarial Networks for Diverse Image Synthesis](https://arxiv.org/abs/1903.05628)
