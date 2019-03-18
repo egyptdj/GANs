@@ -25,7 +25,7 @@ class SessionGAN:
             global_init = tf.initializers.global_variables()
             local_init = tf.initializers.local_variables()
             train_sess.run(global_init)
-            self.summary_writer_train = tf.summary.FileWriter(path.join(path.normpath(savedir),"summary","train"), graph=train_sess.graph)
+            summary_writer_train = tf.summary.FileWriter(path.join(path.normpath(savedir),"summary","train"), graph=train_sess.graph)
             train_sess.graph.finalize()
 
             # RUN EPOCHS
@@ -42,17 +42,17 @@ class SessionGAN:
                     # UPDATE DISCRIMINATOR
                     train_discriminator_summary, _ = train_sess.run(self.graph.discriminator_train, options=self.run_options, run_metadata=self.run_metadata, \
                         feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.discriminator_learning_rate: self.discriminator_learning_rate})
-                    if epoch==0 and step==0: self.summary_writer_train.add_run_metadata(self.run_metadata, 'discriminator')
+                    if epoch==0 and step==0: summary_writer_train.add_run_metadata(self.run_metadata, 'discriminator')
 
                     # UPDATE GENERATOR
                     if ('wgan' in self.graph.type) and ((step+1)%5==0): continue
                     train_generator_summary, _ = train_sess.run(self.graph.generator_train, options=self.run_options, run_metadata=self.run_metadata, \
                         feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.generator_learning_rate: self.generator_learning_rate})
-                    if epoch==0 and step==0: self.summary_writer_train.add_run_metadata(self.run_metadata, 'generator')
+                    if epoch==0 and step==0: summary_writer_train.add_run_metadata(self.run_metadata, 'generator')
 
                 # ADD SUMMARY
-                self.summary_writer_train.add_summary(train_discriminator_summary, epoch)
-                self.summary_writer_train.add_summary(train_generator_summary, epoch)
+                summary_writer_train.add_summary(train_discriminator_summary, epoch)
+                summary_writer_train.add_summary(train_generator_summary, epoch)
 
                 # SAVE MODEL
                 if (epoch+1)%save_epoch==0: self.graph.generator_saver.save(train_sess, path.join(path.normpath(savedir),"model","generator_model.ckpt"))
