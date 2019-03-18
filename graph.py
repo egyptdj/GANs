@@ -122,22 +122,49 @@ class GraphGAN:
                 else:
                     raise ValueError('unknown gan graph type: {}'.format(type))
 
-        # REGULARIZERS
-        with tf.device(self.device):
-            with tf.name_scope(self.scope+'_regularizer'):
-                if regularizer=='modeseek':
-                    with tf.name_scope(self.regularizer):
-                        _img1, _img2 = tf.split(self.generated_image, 2, axis=0, name='image_split')
-                        _noise1, _noise2 = tf.split(self.noise_input, 2, axis=0, name='noise_split')
-                        modeseek_loss = tf.reduce_mean(tf.abs(_img1-_img2), name='generated_image_distance') / tf.reduce_mean(tf.abs(_noise1-_noise2), name='noise_distance')
-                        self.regularizer_loss = 1 / (modeseek_loss + 1e-8)
-                        tf.add_to_collection("GENERATOR_LOSS", self.regularizer_loss)
+                # REGULARIZERS
+                with tf.name_scope('regularizer'):
+                    # MODE-SEEKING GAN
+                    if regularizer=='modeseek':
+                        with tf.name_scope(regularizer):
+                            _img1, _img2 = tf.split(self.generated_image, 2, axis=0, name='image_split')
+                            _noise1, _noise2 = tf.split(self.noise_input, 2, axis=0, name='noise_split')
+                            modeseek_loss = tf.reduce_mean(tf.abs(_img1-_img2), name='generated_image_distance') / tf.reduce_mean(tf.abs(_noise1-_noise2), name='noise_distance')
+                            self.regularizer_loss = 1 / (modeseek_loss + 1e-8)
+                            tf.add_to_collection("GENERATOR_LOSS", self.regularizer_loss)
 
-                elif regularizer=='spectralnorm':
-                    raise NotImplementedError('{} is to be updated'.format(regularizer))
+                    # SPECTRAL NORMALIZATION
+                    elif 'spectralnorm' in regularizer:
+                        def spectral_normalization(kernel, iter, scope='spectral_normalization', collection=tf.GraphKeys.UPDATE_OPS):
+                            with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+                                w = kernel
+                                _w = tf.reshape(w, [-1, w.shape[-1]], name="reshape_weight_to_2d")
+                                u_tilde = tf.get_variable(name="u_tilde", shape=[1, w.shape[-1].value], initializer=tf.initializers.truncated_normal)
+                                _u_tilde = tf.identity(u_tilde, name="u_tilde_update")
+                                for i in range(iter):
+                                    _v_tilde = tf.nn.l2_normalize(tf.matmul(_u_tilde, _w, transpose_b=True), name="v_tilde_update_{}".format(i))
+                                    _u_tilde = tf.nn.l2_normalize(tf.matmul(_v_tilde, _w), name="u_tilde_update_{}".format(i))
+                                    update_u_tilde = u_tilde.assign(_u_tilde)
+                                    sigma_w = tf.squeeze(tf.matmul(tf.matmul(_v_tilde, _w), _u_tilde, transpose_b=True), name='sigma_w')
+                                    _w_sn = _w / sigma_w
+                                    w_sn = tf.reshape(_w_sn, w.shape, name="reshape_weight_to_original")
+                                    kernel_spectral_normalized = tf.identity(w_sn, name="kernel_spectral_normalized")
+                                    with tf.control_dependencies([update_u_tilde]):
+                                        apply_regularization = kernel.assign(kernel_spectral_normalized, name="apply_regularization")
+                                        tf.add_to_collection(collection, value=apply_regularization)
 
-                else:
-                    pass
+                        discriminator_kernel = [var for var in tf.trainable_variables(scope='discriminator') if 'kernel' in var.name]
+                        for idx, kernel in enumerate(discriminator_kernel): spectral_normalization(kernel=kernel, iter=1, scope='d_sn_{}'.format(idx), collection="DISCRIMINATOR_OPS")
+
+                        if 'g' in regularizer:
+                            generator_kernel = [var for var in tf.trainable_variables(scope='generator') if 'kernel' in var.name]
+                            for idx, kernel in enumerate(generator_kernel): spectral_normalization(kernel=kernel, iter=1, scope='g_sn_{}'.format(idx), collection="GENERATOR_OPS")
+
+                    else:
+                        raise ValueError('unknown regularizer type {}'.format(regularizer))
+
+                self.generator_loss = tf.add_n(tf.get_collection("GENERATOR_LOSS"), name='generator_loss')
+                self.discriminator_loss = tf.add_n(tf.get_collection("DISCRIMINATOR_LOSS"), name='discriminator_loss')
 
         # IMAGES
         with tf.device(self.device):
@@ -155,7 +182,7 @@ class GraphGAN:
                 discriminator_real_loss_mean, discriminator_real_loss_mean_op = tf.metrics.mean(self.discriminator_real_loss, name='discriminator_real_loss', updates_collections=["DISCRIMINATOR_OPS"])
                 discriminator_fake_loss_mean, discriminator_fake_loss_mean_op = tf.metrics.mean(self.discriminator_fake_loss, name='discriminator_fake_loss', updates_collections=["DISCRIMINATOR_OPS"])
                 if 'gp' in type: gradient_penalty_mean, gradient_penalty_mean_op = tf.metrics.mean(self.gradient_penalty, name='gradient_penalty', updates_collections=["DISCRIMINATOR_OPS"])
-                if regularizer: regularizer_loss_mean, regularizer_loss_mean_op = tf.metrics.mean(self.regularizer_loss, name='regularizer_loss', updates_collections=["DISCRIMINATOR_OPS"])
+                if regularizer=='modeseek': regularizer_loss_mean, regularizer_loss_mean_op = tf.metrics.mean(self.regularizer_loss, name='regularizer_loss', updates_collections=["DISCRIMINATOR_OPS"])
 
             with tf.name_scope(self.scope+'_summary'):
                 _ = tf.summary.scalar(name='generator_loss', tensor=generator_loss_mean, collections=["GENERATOR_SUMMARY"], family='01_loss_total')
@@ -165,7 +192,7 @@ class GraphGAN:
                 _ = tf.summary.scalar(name='generator_learning_rate', tensor=self.generator_learning_rate, collections=["GENERATOR_SUMMARY"], family='03_hyperparameter')
                 _ = tf.summary.scalar(name='discriminator_learning_rate', tensor=self.discriminator_learning_rate, collections=["DISCRIMINATOR_SUMMARY"], family='03_hyperparameter')
                 if 'gp' in type: _ = tf.summary.scalar(name='gradient_penalty', tensor=gradient_penalty_mean, collections=["DISCRIMINATOR_SUMMARY"], family='02_loss_discriminator')
-                if regularizer: _ = tf.summary.scalar(name='regularizer_loss', tensor=regularizer_loss_mean, collections=["DISCRIMINATOR_SUMMARY"], family='04_regularizer')
+                if regularizer=='modeseek': _ = tf.summary.scalar(name='regularizer_loss', tensor=regularizer_loss_mean, collections=["DISCRIMINATOR_SUMMARY"], family='04_regularizer')
 
             with tf.name_scope(self.scope+'_summary'+'_merge'):
                 self.generator_summary = tf.summary.merge(tf.get_collection("GENERATOR_SUMMARY"))
@@ -175,10 +202,6 @@ class GraphGAN:
         # OPTIMIZATIONS
         with tf.device(self.device):
             with tf.name_scope(self.scope+'_optimize'):
-                with tf.name_scope('losses'):
-                    self.generator_loss = tf.add_n(tf.get_collection("GENERATOR_LOSS"), name='generator_loss')
-                    self.discriminator_loss = tf.add_n(tf.get_collection("DISCRIMINATOR_LOSS"), name='discriminator_loss')
-
                 with tf.name_scope("train_variables"):
                     generator_variables = tf.trainable_variables(scope='generator')
                     discriminator_variables = tf.trainable_variables(scope='discriminator')
