@@ -139,11 +139,13 @@ class GraphGAN:
                             with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
                                 w = kernel
                                 _w = tf.reshape(w, [-1, w.shape[-1]], name="reshape_weight_to_2d")
-                                u_tilde = tf.get_variable(name="u_tilde", shape=[1, _w.shape[-1].value], initializer=tf.initializers.random_normal)
+                                u_tilde = tf.get_variable(name="u_tilde", shape=[1, _w.shape[-1].value], initializer=tf.initializers.random_normal, trainable=False)
                                 _u_tilde = tf.identity(u_tilde, name="u_tilde_update")
                                 for i in range(iter):
                                     _v_tilde = tf.nn.l2_normalize(tf.matmul(_u_tilde, _w, transpose_b=True), name="v_tilde_update_{}".format(i))
                                     _u_tilde = tf.nn.l2_normalize(tf.matmul(_v_tilde, _w), name="u_tilde_update_{}".format(i))
+                                _v_tilde = tf.stop_gradient(_v_tilde)
+                                _u_tilde = tf.stop_gradient(_u_tilde)
                                 update_u_tilde = u_tilde.assign(_u_tilde)
                                 with tf.control_dependencies([update_u_tilde]):
                                     sigma_w = tf.squeeze(tf.matmul(tf.matmul(_v_tilde, _w), u_tilde, transpose_b=True), name='sigma_w')
