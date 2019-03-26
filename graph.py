@@ -135,36 +135,37 @@ class GraphGAN:
 
                     # SPECTRAL NORMALIZATION
                     elif 'spectralnorm' in regularizer:
-                        def spectral_norm(w, iteration=1):
-                            kernel = w
-                            w_shape = w.shape.as_list()
-                            w = tf.reshape(w, [-1, w_shape[-1]])
+                        def spectral_norm(w, scope, iteration=1):
+                            with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+                                kernel = w
+                                w_shape = w.shape.as_list()
+                                w = tf.reshape(w, [-1, w_shape[-1]])
 
-                            u = tf.get_variable("u", [1, w_shape[-1]], initializer=tf.random_normal_initializer(), trainable=False)
+                                u = tf.get_variable("u", [1, w_shape[-1]], initializer=tf.random_normal_initializer(), trainable=False)
 
-                            u_hat = u
-                            v_hat = None
-                            for i in range(iteration):
-                               """
-                               power iteration
-                               Usually iteration = 1 will be enough
-                               """
-                               v_ = tf.matmul(u_hat, tf.transpose(w))
-                               v_hat = tf.nn.l2_normalize(v_)
+                                u_hat = u
+                                v_hat = None
+                                for i in range(iteration):
+                                    """
+                                    power iteration
+                                    Usually iteration = 1 will be enough
+                                    """
+                                    v_ = tf.matmul(u_hat, tf.transpose(w))
+                                    v_hat = tf.nn.l2_normalize(v_)
 
-                               u_ = tf.matmul(v_hat, w)
-                               u_hat = tf.nn.l2_normalize(u_)
+                                    u_ = tf.matmul(v_hat, w)
+                                    u_hat = tf.nn.l2_normalize(u_)
 
-                            u_hat = tf.stop_gradient(u_hat)
-                            v_hat = tf.stop_gradient(v_hat)
+                                u_hat = tf.stop_gradient(u_hat)
+                                v_hat = tf.stop_gradient(v_hat)
 
-                            sigma = tf.matmul(tf.matmul(v_hat, w), tf.transpose(u_hat))
+                                sigma = tf.matmul(tf.matmul(v_hat, w), tf.transpose(u_hat))
 
-                            with tf.control_dependencies([u.assign(u_hat)]):
-                               w_norm = w / sigma
-                               w_norm = tf.reshape(w_norm, w_shape)
-                               normalize = kernel.assign(w_norm)
-                               tf.add_to_collection("DISCRIMINATOR_OPS", normalize)
+                                with tf.control_dependencies([u.assign(u_hat)]):
+                                    w_norm = w / sigma
+                                    w_norm = tf.reshape(w_norm, w_shape)
+                                    normalize = kernel.assign(w_norm)
+                                    tf.add_to_collection("DISCRIMINATOR_OPS", normalize)
 
 
                         def spectral_normalization(kernel, iter, scope='spectral_normalization', collection=tf.GraphKeys.UPDATE_OPS):
@@ -189,7 +190,7 @@ class GraphGAN:
 
                         discriminator_kernel = [var for var in tf.trainable_variables(scope='discriminator') if 'kernel' in var.name]
                         # for idx, kernel in enumerate(discriminator_kernel): spectral_normalization(kernel=kernel, iter=1, scope='d_sn_{}'.format(idx), collection="DISCRIMINATOR_OPS")
-                        for idx, kernel in enumerate(discriminator_kernel): spectral_norm(kernel)
+                        for idx, kernel in enumerate(discriminator_kernel): spectral_norm(kernel, scope='sn_{}'.format(idx))
 
                         if 'g' in regularizer:
                             generator_kernel = [var for var in tf.trainable_variables(scope='generator') if 'kernel' in var.name]
