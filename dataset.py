@@ -12,7 +12,7 @@ class DatasetGAN:
     def build_dataset(self, type):
         if type=='cifar10':
             # LOAD DATA
-            from keras.datasets import cifar10
+            from tensorflow.keras.datasets import cifar10
             (train_image, train_label), (test_image, test_label) = cifar10.load_data()
 
             # PREPARE IMAGE BATCH
@@ -29,7 +29,7 @@ class DatasetGAN:
 
         elif type=='cifar100':
             # LOAD DATA
-            from keras.datasets import cifar100
+            from tensorflow.keras.datasets import cifar10
             (train_image, train_label), (test_image, test_label) = cifar100.load_data()
 
             # PREPARE IMAGE BATCH
@@ -46,7 +46,7 @@ class DatasetGAN:
 
         elif type=='mnist':
             # LOAD DATA
-            from keras.datasets import mnist
+            from tensorflow.keras.datasets import cifar10
             (train_image, train_label), (test_image, test_label) = mnist.load_data()
 
             # PREPARE IMAGE BATCH

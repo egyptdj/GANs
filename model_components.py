@@ -79,7 +79,27 @@ class DiscriminatorComponentGAN:
 
                     # AUXILIARY CLASSIFIER GAN
                     elif self.type=='acgan':
-                        raise NotImplementedError('{} is to be updated'.format(type))
+                        _x = tf.layers.conv2d(inputs=_x, filters=16, kernel_size=[3,3], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='conv0')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu0')
+                        _x = tf.layers.conv2d(inputs=_x, filters=32, kernel_size=[3,3], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=1, padding='SAME', name='conv1')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm0')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu1')
+                        _x = tf.layers.conv2d(inputs=_x, filters=64, kernel_size=[3,3], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='conv2')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm_1')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu2')
+                        _x = tf.layers.conv2d(inputs=_x, filters=128, kernel_size=[3,3], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=1, padding='SAME', name='conv3')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm_2')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu3')
+                        _x = tf.layers.conv2d(inputs=_x, filters=256, kernel_size=[3,3], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='conv4')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm_4')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu4')
+                        _x = tf.layers.conv2d(inputs=_x, filters=512, kernel_size=[3,3], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=1, padding='SAME', name='conv5')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm_5')
+                        _x = tf.nn.leaky_relu(_x, name='leakyrelu5')
+                        _x = tf.layers.flatten(inputs=_x, name='flatten')
+                        _x = tf.layers.dense(inputs=_x, units=1, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
+                        _xl = _x
+                        _x = tf.nn.sigmoid(_x, name='sigmoid')
 
                     else:
                         raise ValueError('unknown gan model type: {}'.format(type))
@@ -169,7 +189,18 @@ class GeneratorComponentGAN:
 
                     # AUXILIARY CLASSIFIER GAN
                     elif self.type=='acgan':
-                        raise NotImplementedError('{} is to be updated'.format(type))
+                        _z = tf.concat([_z, _y], axis=1, name='noise_label_concat0')
+                        _z = tf.layers.dense(inputs=_z, units=(_xs[0]//8)*(_xs[1]//8)*384, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
+                        _z = tf.reshape(_z, shape=[-1, _xs[0]//8, _xs[1]//8, 384], name='reshape0')
+                        _z = tf.nn.relu(_z, name='relu0')
+                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=192, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv0')
+                        _z = tf.layers.batch_normalization(inputs=_z, training=self.training, name='batchnorm1')
+                        _z = tf.nn.relu(_z, name='relu1')
+                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=96, kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv1')
+                        _z = tf.layers.batch_normalization(inputs=_z, training=self.training, name='batchnorm2')
+                        _z = tf.nn.relu(_z, name='relu2')
+                        _z = tf.layers.conv2d_transpose(inputs=_z, filters=_xs[2], kernel_size=[5,5], kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), strides=2, padding='SAME', name='deconv2')
+                        _z = tf.nn.tanh(_z, name='tanh')
 
                     else:
                         raise ValueError('unknown gan model type: {}'.format(type))
@@ -194,8 +225,18 @@ class ClassifierComponentGAN:
             with tf.name_scope(model_scope):
                 with tf.variable_scope(self.scope, reuse=reuse):
                     _x = x # first layer initialized
-                    _y = y # first layer initialized
+                    _ys = y.shape.as_list()[1]
 
                     # AUXILIARY CLASSIFIER GAN
                     if self.type=='acgan':
-                        raise NotImplementedError('{} is to be updated'.format(type))
+                        _x = tf.layers.dense(inputs=_x, units=128, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected0')
+                        _x = tf.layers.batch_normalization(inputs=_x, training=self.training, name='batchnorm0')
+                        _x = tf.nn.relu(_x, name='relu0')
+                        _x = tf.layers.flatten(inputs=_x, name='flatten')
+                        _x = tf.layers.dense(inputs=_x, units=_ys, kernel_initializer=tf.initializers.truncated_normal(stddev=0.02), name='fullyconnected1')
+
+                    else:
+                        raise ValueError('unknown gan model type: {}'.format(type))
+
+                    self.model_output = _x
+                    return self.model_output

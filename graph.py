@@ -119,6 +119,36 @@ class GraphGAN:
                             logits=self.model.discriminator_fake_model_logit, \
                             weights=1.0, loss_collection="DISCRIMINATOR_LOSS", scope='discriminator_fake_loss')
 
+                # AUXILIARY-CLASSIFIER GAN
+                elif type=='acgan':
+                    with tf.name_scope("generator_loss"):
+                        self.generator_fake_loss = tf.losses.sigmoid_cross_entropy(\
+                            multi_class_labels=tf.ones_like(self.model.discriminator_fake_model_output), \
+                            logits=self.model.discriminator_fake_model_logit, \
+                            weights=1.0, loss_collection="GENERATOR_LOSS", scope='generator_loss')
+
+                    with tf.name_scope("discriminator_loss"):
+                        self.discriminator_real_loss = tf.losses.sigmoid_cross_entropy(\
+                            multi_class_labels=tf.ones_like(self.model.discriminator_real_model_output), \
+                            logits=self.model.discriminator_real_model_logit, \
+                            weights=1.0, loss_collection="DISCRIMINATOR_LOSS", scope='discriminator_real_loss')
+
+                        self.discriminator_fake_loss = tf.losses.sigmoid_cross_entropy(\
+                            multi_class_labels=tf.zeros_like(self.model.discriminator_fake_model_output), \
+                            logits=self.model.discriminator_fake_model_logit, \
+                            weights=1.0, loss_collection="DISCRIMINATOR_LOSS", scope='discriminator_fake_loss')
+
+                    with tf.name_scope("classifier_loss"):
+                        self.classifier_real_loss = tf.losses.softmax_cross_entropy(\
+                            onehot_labels=self.label_input, \
+                            logits=self.model.classifier_real_model_output, \
+                            weights=1.0, loss_collection="CLASSIFIER_LOSS", scope='classifier_real_loss')
+
+                        self.classifier_fake_loss = tf.losses.softmax_cross_entropy(\
+                            onehot_labels=self.label_input, \
+                            logits=self.model.classifier_fake_model_output, \
+                            weights=1.0, loss_collection="CLASSIFIER_LOSS", scope='classifier_fake_loss')
+
                 else:
                     raise ValueError('unknown gan graph type: {}'.format(type))
 
@@ -134,7 +164,7 @@ class GraphGAN:
                             tf.add_to_collection("GENERATOR_LOSS", self.regularizer_loss)
 
                     # SPECTRAL NORMALIZATION
-                    elif 'spectralnorm' in regularizer:
+                    elif regularizer=='spectralnorm':
                         def spectral_norm(w, scope, iteration=1):
                             with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
                                 kernel = w
@@ -197,10 +227,15 @@ class GraphGAN:
                             for idx, kernel in enumerate(generator_kernel): spectral_normalization(kernel=kernel, iter=1, scope='g_sn_{}'.format(idx), collection="GENERATOR_OPS")
 
                     else:
-                        raise ValueError('unknown regularizer type {}'.format(regularizer))
+                        if regularizer is not None:
+                            raise ValueError('unknown regularizer type {}'.format(regularizer))
+                        else:
+                            pass
 
                 self.generator_loss = tf.add_n(tf.get_collection("GENERATOR_LOSS"), name='generator_loss')
                 self.discriminator_loss = tf.add_n(tf.get_collection("DISCRIMINATOR_LOSS"), name='discriminator_loss')
+                if type=='acgan':
+                    self.classifier_loss = tf.add_n(tf.get_collection("CLASSIFIER_LOSS"), name='classifier_loss')
 
         # IMAGES
         with tf.device(self.device):
@@ -212,13 +247,17 @@ class GraphGAN:
         # SUMMARIES
         with tf.device(self.device):
             with tf.name_scope(self.scope+'_summary'+'_op'):
-                generator_loss_mean, generator_loss_mean_op = tf.metrics.mean(self.generator_loss, name='generator_loss', updates_collections=["GENERATOR_OPS"])
-                generator_fake_loss_mean, generator_fake_loss_mean_op = tf.metrics.mean(self.generator_fake_loss, name='generator_fake_loss', updates_collections=["GENERATOR_OPS"])
-                discriminator_loss_mean, discriminator_loss_mean_op = tf.metrics.mean(self.discriminator_loss, name='discriminator_loss', updates_collections=["DISCRIMINATOR_OPS"])
-                discriminator_real_loss_mean, discriminator_real_loss_mean_op = tf.metrics.mean(self.discriminator_real_loss, name='discriminator_real_loss', updates_collections=["DISCRIMINATOR_OPS"])
-                discriminator_fake_loss_mean, discriminator_fake_loss_mean_op = tf.metrics.mean(self.discriminator_fake_loss, name='discriminator_fake_loss', updates_collections=["DISCRIMINATOR_OPS"])
-                if 'gp' in type: gradient_penalty_mean, gradient_penalty_mean_op = tf.metrics.mean(self.gradient_penalty, name='gradient_penalty', updates_collections=["DISCRIMINATOR_OPS"])
-                if regularizer=='modeseek': regularizer_loss_mean, regularizer_loss_mean_op = tf.metrics.mean(self.regularizer_loss, name='regularizer_loss', updates_collections=["DISCRIMINATOR_OPS"])
+                generator_loss_mean, _ = tf.metrics.mean(self.generator_loss, name='generator_loss', updates_collections=["GENERATOR_OPS"])
+                generator_fake_loss_mean, _ = tf.metrics.mean(self.generator_fake_loss, name='generator_fake_loss', updates_collections=["GENERATOR_OPS"])
+                discriminator_loss_mean, _ = tf.metrics.mean(self.discriminator_loss, name='discriminator_loss', updates_collections=["DISCRIMINATOR_OPS"])
+                discriminator_real_loss_mean, _ = tf.metrics.mean(self.discriminator_real_loss, name='discriminator_real_loss', updates_collections=["DISCRIMINATOR_OPS"])
+                discriminator_fake_loss_mean, _ = tf.metrics.mean(self.discriminator_fake_loss, name='discriminator_fake_loss', updates_collections=["DISCRIMINATOR_OPS"])
+                if 'gp' in type: gradient_penalty_mean, _ = tf.metrics.mean(self.gradient_penalty, name='gradient_penalty', updates_collections=["DISCRIMINATOR_OPS"])
+                if regularizer=='modeseek': regularizer_loss_mean, _ = tf.metrics.mean(self.regularizer_loss, name='regularizer_loss', updates_collections=["DISCRIMINATOR_OPS"])
+                if type=='acgan':
+                    classifier_loss_mean, _ = tf.metrics.mean(self.classifier_loss, name='classifier_loss', updates_collections=["CLASSIFIER_OPS"])
+                    classifier_real_loss_mean, _ = tf.metrics.mean(self.classifier_real_loss, name='classifier_loss', updates_collections=["CLASSIFIER_OPS"])
+                    classifier_fake_loss_mean, _ = tf.metrics.mean(self.classifier_fake_loss, name='classifier_loss', updates_collections=["CLASSIFIER_OPS"])
 
             with tf.name_scope(self.scope+'_summary'):
                 _ = tf.summary.scalar(name='generator_loss', tensor=generator_loss_mean, collections=["GENERATOR_SUMMARY"], family='01_loss_total')
@@ -229,10 +268,16 @@ class GraphGAN:
                 _ = tf.summary.scalar(name='discriminator_learning_rate', tensor=self.discriminator_learning_rate, collections=["DISCRIMINATOR_SUMMARY"], family='03_hyperparameter')
                 if 'gp' in type: _ = tf.summary.scalar(name='gradient_penalty', tensor=gradient_penalty_mean, collections=["DISCRIMINATOR_SUMMARY"], family='02_loss_discriminator')
                 if regularizer=='modeseek': _ = tf.summary.scalar(name='regularizer_loss', tensor=regularizer_loss_mean, collections=["DISCRIMINATOR_SUMMARY"], family='04_regularizer')
+                if type=='acgan':
+                    _ = tf.summary.scalar(name='classifier_loss', tensor=classifier_loss_mean, collections=['CLASSIFIER_SUMMARY'], family='01_loss_total')
+                    _ = tf.summary.scalar(name='classifier_real_loss', tensor=classifier_real_loss_mean, collections=['CLASSIFIER_SUMMARY'], family='05_loss_classifier')
+                    _ = tf.summary.scalar(name='classifier_fake_loss', tensor=classifier_fake_loss_mean, collections=['CLASSIFIER_SUMMARY'], family='05_loss_classifier')
 
             with tf.name_scope(self.scope+'_summary'+'_merge'):
                 self.generator_summary = tf.summary.merge(tf.get_collection("GENERATOR_SUMMARY"))
                 self.discriminator_summary = tf.summary.merge(tf.get_collection("DISCRIMINATOR_SUMMARY"))
+                if type=='acgan':
+                    self.classifier_summary = tf.summary.merge(tf.get_collection("CLASSIFIER_SUMMARY"))
                 self.merged_summary = tf.summary.merge_all()
 
         # OPTIMIZATIONS
@@ -261,6 +306,15 @@ class GraphGAN:
 
                 self.generator_train = [self.generator_summary, self.generator_optimize]
                 self.discriminator_train = [self.discriminator_summary, self.discriminator_optimize]
+
+                if type=='acgan':
+                    with tf.name_scope("classifier_optimize"):
+                        classifier_variables = tf.trainable_variables(scope='classifier') + generator_variables + discriminator_variables
+                        classifier_optimizer = tf.train.AdamOptimizer(learning_rate=self.generator_learning_rate, name='classifier_optimizer')
+                        classifier_gradients_and_variables = classifier_optimizer.compute_gradients(loss=self.classifier_loss, var_list=classifier_variables)
+                        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='classifier')+tf.get_collection("CLASSIFIER_OPS")):
+                            self.classifier_optimize = classifier_optimizer.apply_gradients(classifier_gradients_and_variables, name='classifier_train')
+                    self.classifier_train = [self.classifier_summary, self.classifier_optimize]
 
         # SAVERS
         with tf.device("/CPU:0"):

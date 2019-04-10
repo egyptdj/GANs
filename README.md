@@ -3,6 +3,8 @@
 Repository for TensorFlow implementation of Generative Adversarial Networks (GANs).
 
 ## Background
+*! Tensorflow 2.0.0-alpha is released. Update will follow.*
+
 TensorFlow implementation of GAN and its variants can be easily found from GitHub.
 Despite the fact that most GANs share the minimax-game philosophy with some modification in its **model** (**model** refers to the multi-layer perceptron structure in this document. i.e. layers of D and G) or **graph** (**graph** refers to the operations applied to the **model** in this document. e.g. optimizers, losses and regularizers of the network), there has been no implementation that can separately switch between these modifications.
 Say that you want to try a network that has a **model** of the DCGAN, combined with a **graph** of the GEOGAN with hinge loss.
@@ -21,7 +23,6 @@ I also considered maximizing the compatibility with the TensorBoard, so that cle
 ## Requirements
 Python3 with following packages
 - `tensorflow >= 1.12.0`
-- `keras >= 2.2.4` for importing datasets
 - `matplotlib >= 3.0.2` for saving images
 
 ## Usage
@@ -35,8 +36,9 @@ Datasets
 
 Models
 - GAN
-- CGAN
 - DCGAN
+- CGAN
+- ACGAN
 
 Graphs
 - GAN
@@ -44,11 +46,12 @@ Graphs
 - WGAN
 - WGAN-GP
 - GEOGAN
+- ACGAN
 
 Regularizers
 - Mode-seek
 
-Other model options are being updated.
+Other options are being updated.
 
 ## Implementation
 - `main.py`
@@ -80,10 +83,11 @@ Other model options are being updated.
 
 ## Reference
 - GAN: [Generative Adversarial Nets](http://papers.nips.cc/paper/5423-generative-adversarial-nets)
-- CGAN: [Conditional Generative Adversarial Nets](https://arxiv.org/abs/1411.1784)
 - DCGAN: [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/abs/1511.06434)
 - LSGAN: [Least Squares Generative Adversarial Networks](https://arxiv.org/abs/1611.04076)
 - WGAN: [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
 - WGAN-GP: [Improved Training of Wasserstein GANs](https://arxiv.org/abs/1704.00028)
 - GEOGAN: [Geometric GAN](https://arxiv.org/abs/1705.02894)
+- CGAN: [Conditional Generative Adversarial Nets](https://arxiv.org/abs/1411.1784)
+- ACGAN: [Conditional Image Synthesis with Auxiliary Classifier GANs](https://arxiv.org/abs/1610.09585)
 - MODESEEK: [Mode Seeking Generative Adversarial Networks for Diverse Image Synthesis](https://arxiv.org/abs/1903.05628)

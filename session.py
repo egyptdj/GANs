@@ -50,9 +50,15 @@ class SessionGAN:
                         feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.generator_learning_rate: self.generator_learning_rate})
                     if epoch==0 and step==0: summary_writer_train.add_run_metadata(self.run_metadata, 'generator')
 
+                    # UPDATE CLASSIFIER (IF APPLICABLE)
+                    if self.graph.type=='acgan':
+                        train_classifier_summary, _ = train_sess.run(self.graph.classifier_train, options=self.run_options, run_metadata=self.run_metadata, \
+                        feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.generator_learning_rate: self.generator_learning_rate})
+
                 # ADD SUMMARY
                 summary_writer_train.add_summary(train_discriminator_summary, epoch)
                 summary_writer_train.add_summary(train_generator_summary, epoch)
+                if self.graph.type=='acgan': summary_writer_train.add_summary(train_classifier_summary, epoch)
 
                 # SAVE MODEL
                 if (epoch+1)%save_epoch==0: self.graph.generator_saver.save(train_sess, path.join(path.normpath(savedir),"model","generator_model.ckpt"))

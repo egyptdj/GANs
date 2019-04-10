@@ -18,7 +18,7 @@ class ModelGAN:
             self.classifier = model_components.ClassifierComponentGAN(device=self.device, scope="classifier", type=type, training=training)
 
         # BUILD GENERATORS AND DISCRIMINATORS
-        if type=='gan' or type=='dcgan' or type=='cgan':
+        if type=='gan' or type=='dcgan' or type=='cgan' or type=='acgan':
             with tf.name_scope(self.scope):
                 with tf.name_scope("model_inputs"):
                     noise_input = tf.identity(noise_input, name="noise_input")
@@ -32,5 +32,9 @@ class ModelGAN:
                 with tf.name_scope("discriminator_models"):
                     self.discriminator_real_model_output, self.discriminator_real_model_logit = self.discriminator.build(image_input=image_input, label_input=label_input, model_scope='discriminator_real', reuse=True)
 
+                if type=='acgan':
+                    with tf.name_scope("classifier_models"):
+                        self.classifier_real_model_output = self.classifier.build(image_input=image_input, label_input=label_input, model_scope='classifier_real', reuse=False)
+                        self.classifier_fake_model_output = self.classifier.build(image_input=self.generator_model_output, label_input=label_input, model_scope='classifier_fake', reuse=True)
         else:
             raise ValueError('unknown gan model type: {}'.format(type))
