@@ -29,7 +29,7 @@ class DatasetGAN:
 
         elif type=='cifar100':
             # LOAD DATA
-            from tensorflow.keras.datasets import cifar10
+            from tensorflow.keras.datasets import cifar100
             (train_image, train_label), (test_image, test_label) = cifar100.load_data()
 
             # PREPARE IMAGE BATCH
@@ -46,7 +46,7 @@ class DatasetGAN:
 
         elif type=='mnist':
             # LOAD DATA
-            from tensorflow.keras.datasets import cifar10
+            from tensorflow.keras.datasets import mnist
             (train_image, train_label), (test_image, test_label) = mnist.load_data()
 
             # PREPARE IMAGE BATCH
