@@ -95,7 +95,7 @@ class GraphGAN:
                             with tf.name_scope('gradient_penalty'):
                                 epsilon = tf.random.uniform([], name='epsilon')
                                 gradient_image = tf.identity((epsilon * self.image_input + (1-epsilon) * self.generated_image), name='gradient_image')
-                                discriminator_gradient_model_output, discriminator_gradient_model_logit = self.model.discriminator.build(image_input=gradient_image, model_scope='discriminator_gradient_image', reuse=True)
+                                discriminator_gradient_model_output, discriminator_gradient_model_logit = self.model.discriminator.build(image_input=gradient_image, label_input=self.label_input, model_scope='discriminator_gradient_image', reuse=True)
                                 gradients = tf.gradients(discriminator_gradient_model_logit, gradient_image, name='gradients')
                                 gradient_norm = tf.norm(gradients[0], ord=2, name='gradient_norm')
                                 self.gradient_penalty = tf.square(gradient_norm - 1)
@@ -165,66 +165,9 @@ class GraphGAN:
 
                     # SPECTRAL NORMALIZATION
                     elif regularizer=='spectralnorm':
-                        def spectral_norm(w, scope, iteration=1):
-                            with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-                                kernel = w
-                                w_shape = w.shape.as_list()
-                                w = tf.reshape(w, [-1, w_shape[-1]])
-
-                                u = tf.get_variable("u", [1, w_shape[-1]], initializer=tf.random_normal_initializer(), trainable=False)
-
-                                u_hat = u
-                                v_hat = None
-                                for i in range(iteration):
-                                    """
-                                    power iteration
-                                    Usually iteration = 1 will be enough
-                                    """
-                                    v_ = tf.matmul(u_hat, tf.transpose(w))
-                                    v_hat = tf.nn.l2_normalize(v_)
-
-                                    u_ = tf.matmul(v_hat, w)
-                                    u_hat = tf.nn.l2_normalize(u_)
-
-                                u_hat = tf.stop_gradient(u_hat)
-                                v_hat = tf.stop_gradient(v_hat)
-
-                                sigma = tf.matmul(tf.matmul(v_hat, w), tf.transpose(u_hat))
-
-                                with tf.control_dependencies([u.assign(u_hat)]):
-                                    w_norm = w / sigma
-                                    w_norm = tf.reshape(w_norm, w_shape)
-                                    normalize = kernel.assign(w_norm)
-                                    tf.add_to_collection("DISCRIMINATOR_OPS", normalize)
-
-
-                        def spectral_normalization(kernel, iter, scope='spectral_normalization', collection=tf.GraphKeys.UPDATE_OPS):
-                            with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
-                                w = kernel
-                                _w = tf.reshape(w, [-1, w.shape[-1]], name="reshape_weight_to_2d")
-                                u_tilde = tf.get_variable(name="u_tilde", shape=[1, _w.shape[-1].value], initializer=tf.initializers.random_normal, trainable=False)
-                                _u_tilde = tf.identity(u_tilde, name="u_tilde_update")
-                                for i in range(iter):
-                                    _v_tilde = tf.nn.l2_normalize(tf.matmul(_u_tilde, _w, transpose_b=True), name="v_tilde_update_{}".format(i))
-                                    _u_tilde = tf.nn.l2_normalize(tf.matmul(_v_tilde, _w), name="u_tilde_update_{}".format(i))
-                                _v_tilde = tf.stop_gradient(_v_tilde)
-                                _u_tilde = tf.stop_gradient(_u_tilde)
-                                update_u_tilde = u_tilde.assign(_u_tilde)
-                                with tf.control_dependencies([update_u_tilde]):
-                                    sigma_w = tf.squeeze(tf.matmul(tf.matmul(_v_tilde, _w), u_tilde, transpose_b=True), name='sigma_w')
-                                    _w_sn = _w / sigma_w
-                                    w_sn = tf.reshape(_w_sn, w.shape, name="reshape_weight_to_original")
-                                    kernel_spectral_normalized = tf.identity(w_sn, name="kernel_spectral_normalized")
-                                    apply_regularization = kernel.assign(kernel_spectral_normalized, name="apply_regularization")
-                                    tf.add_to_collection(collection, value=apply_regularization)
-
+                        from custom.regularizers import spectral_normalization
                         discriminator_kernel = [var for var in tf.trainable_variables(scope='discriminator') if 'kernel' in var.name]
-                        # for idx, kernel in enumerate(discriminator_kernel): spectral_normalization(kernel=kernel, iter=1, scope='d_sn_{}'.format(idx), collection="DISCRIMINATOR_OPS")
-                        for idx, kernel in enumerate(discriminator_kernel): spectral_norm(kernel, scope='sn_{}'.format(idx))
-
-                        if 'g' in regularizer:
-                            generator_kernel = [var for var in tf.trainable_variables(scope='generator') if 'kernel' in var.name]
-                            for idx, kernel in enumerate(generator_kernel): spectral_normalization(kernel=kernel, iter=1, scope='g_sn_{}'.format(idx), collection="GENERATOR_OPS")
+                        for idx, kernel in enumerate(discriminator_kernel): spectral_normalization(kernel, scope='discriminator_sn_{}'.format(idx), collection="DISCRIMINATOR_OPS")
 
                     else:
                         if regularizer is not None:
@@ -301,7 +244,7 @@ class GraphGAN:
 
                     discriminator_optimizer = tf.train.RMSPropOptimizer(learning_rate=self.discriminator_learning_rate, name='discriminator_optimizer')
                     discriminator_gradients_and_variables = discriminator_optimizer.compute_gradients(loss=self.discriminator_loss, var_list=discriminator_variables)
-                    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='discriminator')+tf.get_collection("DISCRIMINATOR_OPS")):
+                    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)+tf.get_collection("DISCRIMINATOR_OPS")):
                         self.discriminator_optimize = discriminator_optimizer.apply_gradients(discriminator_gradients_and_variables, name='discriminator_train')
 
                 self.generator_train = [self.generator_summary, self.generator_optimize]
@@ -312,7 +255,7 @@ class GraphGAN:
                         classifier_variables = tf.trainable_variables(scope='classifier') + generator_variables + discriminator_variables
                         classifier_optimizer = tf.train.AdamOptimizer(learning_rate=self.generator_learning_rate, name='classifier_optimizer')
                         classifier_gradients_and_variables = classifier_optimizer.compute_gradients(loss=self.classifier_loss, var_list=classifier_variables)
-                        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='classifier')+tf.get_collection("CLASSIFIER_OPS")):
+                        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)+tf.get_collection("CLASSIFIER_OPS")):
                             self.classifier_optimize = classifier_optimizer.apply_gradients(classifier_gradients_and_variables, name='classifier_train')
                     self.classifier_train = [self.classifier_summary, self.classifier_optimize]
 

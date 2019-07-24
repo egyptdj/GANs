@@ -18,7 +18,7 @@ class ModelGAN:
             self.classifier = model_components.ClassifierComponentGAN(device=self.device, scope="classifier", type=type, training=training)
 
         # BUILD GENERATORS AND DISCRIMINATORS
-        if type=='gan' or type=='dcgan' or type=='cgan' or type=='acgan':
+        if type=='gan' or type=='dcgan' or type=='cgan' or type=='acgan' or type=='sngan':
             with tf.name_scope(self.scope):
                 with tf.name_scope("model_inputs"):
                     noise_input = tf.identity(noise_input, name="noise_input")

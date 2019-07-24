@@ -27,7 +27,6 @@ class SessionGAN:
             train_sess.run(global_init)
             summary_writer_train = tf.summary.FileWriter(path.join(path.normpath(savedir),"summary","train"), graph=train_sess.graph)
             train_sess.graph.finalize()
-
             # RUN EPOCHS
             for epoch in range(self.num_epoch):
                 train_idx = self.dataset.get_idx(shuffle=True)
@@ -43,13 +42,11 @@ class SessionGAN:
                     train_discriminator_summary, _ = train_sess.run(self.graph.discriminator_train, options=self.run_options, run_metadata=self.run_metadata, \
                         feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.discriminator_learning_rate: self.discriminator_learning_rate})
                     if epoch==0 and step==0: summary_writer_train.add_run_metadata(self.run_metadata, 'discriminator')
-
                     # UPDATE GENERATOR
                     if ('wgan' in self.graph.type) and ((step+1)%5==0): continue
                     train_generator_summary, _ = train_sess.run(self.graph.generator_train, options=self.run_options, run_metadata=self.run_metadata, \
                         feed_dict={self.graph.image_input: train_image_input, self.graph.noise_input: train_noise_input, self.graph.label_input: train_label_input, self.graph.training: True, self.graph.generator_learning_rate: self.generator_learning_rate})
                     if epoch==0 and step==0: summary_writer_train.add_run_metadata(self.run_metadata, 'generator')
-
                     # UPDATE CLASSIFIER (IF APPLICABLE)
                     if self.graph.type=='acgan':
                         train_classifier_summary, _ = train_sess.run(self.graph.classifier_train, options=self.run_options, run_metadata=self.run_metadata, \

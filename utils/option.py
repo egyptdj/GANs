@@ -14,7 +14,7 @@ def parse():
     parser.add_argument('-tD', '--dataset_type', type=str, default='mnist', help='type of the dataset [mnist/cifar10/cifar100]')
     parser.add_argument('-tM', '--model_type', type=str, default='gan', help='type of the GAN model [gan/dcgan/cgan/acgan]')
     parser.add_argument('-tG', '--graph_type', type=str, default='gan', help='type of the GAN graph [gan/lsgan/wgan/wgan-gp/geogan/acgan]')
-    parser.add_argument('-tR', '--regularizer_type', type=str, default=None, help='type of the GAN regularizer [modeseek]')
+    parser.add_argument('-tR', '--regularizer_type', type=str, default=None, help='type of the GAN regularizer [spectralnorm/modeseek]')
     parser.add_argument('-lD', '--discriminator_learning_rate', type=float, default=1e-3, help='learning rate of the discriminator training')
     parser.add_argument('-lG', '--generator_learning_rate', type=float, default=1e-4, help='learning rate of the generator training')
     parser.add_argument('-dS', '--savedir', type=str, default='./GANs', help='directory path to save the trained generator model and/or the resulting image')

@@ -3,7 +3,7 @@
 Repository for TensorFlow implementation of Generative Adversarial Networks (GANs).
 
 ## Background
-*! Tensorflow 2.0.0-alpha is released. Update will follow.*
+*NOTE: Tensorflow 2.0.0-alpha is released. Update will follow.*
 
 TensorFlow implementation of GAN and its variants can be easily found from GitHub.
 Despite the fact that most GANs share the minimax-game philosophy with some modification in its **model** (**model** refers to the multi-layer perceptron structure in this document. i.e. layers of D and G) or **graph** (**graph** refers to the operations applied to the **model** in this document. e.g. optimizers, losses and regularizers of the network), there has been no implementation that can separately switch between these modifications.
@@ -39,6 +39,8 @@ Models
 - DCGAN
 - CGAN
 - ACGAN
+<!-- - SNGAN
+- SNGAN-P -->
 
 Graphs
 - GAN
@@ -49,7 +51,10 @@ Graphs
 - ACGAN
 
 Regularizers
+- Spectral Normalization
 - Mode-seek
+
+  *NOTE: an issue is ongoing when applying spectral normalization with GPUs* (https://github.com/tensorflow/tensorflow/issues/24660#issue-395158041)
 
 Other options are being updated.
 
@@ -90,4 +95,5 @@ Other options are being updated.
 - GEOGAN: [Geometric GAN](https://arxiv.org/abs/1705.02894)
 - CGAN: [Conditional Generative Adversarial Nets](https://arxiv.org/abs/1411.1784)
 - ACGAN: [Conditional Image Synthesis with Auxiliary Classifier GANs](https://arxiv.org/abs/1610.09585)
+- SPECTRALNORM: [Spectral Normalization for Generative Adversarial Networks](https://arxiv.org/abs/1802.05957)
 - MODESEEK: [Mode Seeking Generative Adversarial Networks for Diverse Image Synthesis](https://arxiv.org/abs/1903.05628)
